@@ -1,0 +1,4 @@
+# Keep LF line endings so files work the same inside Linux containers
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
