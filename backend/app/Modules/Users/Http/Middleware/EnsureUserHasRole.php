@@ -16,7 +16,7 @@ class EnsureUserHasRole
         $user = $request->user();
 
         if (! $user || ! in_array($user->role->value, $roles, true)) {
-            abort(Response::HTTP_FORBIDDEN, 'You are not allowed to perform this action.');
+            abort(Response::HTTP_FORBIDDEN);
         }
 
         return $next($request);

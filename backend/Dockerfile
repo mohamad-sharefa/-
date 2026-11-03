@@ -16,5 +16,8 @@ COPY . .
 RUN composer dump-autoload --optimize \
     && chown -R www-data:www-data storage bootstrap/cache
 
+# Don't announce the PHP version (X-Powered-By header)
+RUN echo "expose_php = Off" > /usr/local/etc/php/conf.d/security.ini
+
 EXPOSE 9000
 CMD ["php-fpm"]

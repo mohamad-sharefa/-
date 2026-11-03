@@ -39,7 +39,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.loadProduct(@json($productId));
 </script>
 @endpush

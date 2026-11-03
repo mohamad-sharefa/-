@@ -67,7 +67,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.initProductForm();
 </script>
 @endpush

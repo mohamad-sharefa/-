@@ -34,7 +34,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.redirectIfLoggedIn();
     Store.bindForm('login-form', '/auth/login', {
         401: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',

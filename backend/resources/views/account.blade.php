@@ -32,7 +32,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.loadAccount();
 </script>
 @endpush

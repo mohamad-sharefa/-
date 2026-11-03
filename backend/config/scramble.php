@@ -50,12 +50,31 @@ return [
         /*
          * API version.
          */
-        'version' => env('API_VERSION', '0.0.1'),
+        'version' => env('API_VERSION', '1.0.0'),
 
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'Distributed real-time e-commerce platform API. Log in with POST /auth/login, then use the returned token (the Swagger page at /api/documentation applies it automatically).',
+        'description' => <<<'MD'
+Distributed real-time e-commerce platform API (version 1, every path starts with `/api/v1`).
+
+**Authentication.** Log in with `POST /auth/login` and send the returned token as `Authorization: Bearer <token>`.
+The Swagger page at `/api/documentation` keeps the token and sends it for you.
+Roles: `customer` (sees only their own orders) and `admin` (adds products, sees every order, changes order status).
+
+**Language.** Send `Accept-Language: ar` for Arabic messages; English is the default.
+
+**Errors.** Every error has the same shape:
+
+```json
+{ "status": 422, "code": "validation_failed", "message": "The given data is invalid.", "errors": { "email": ["..."] } }
+```
+
+`code` is one of `unauthenticated` (401), `forbidden` (403), `not_found` (404), `method_not_allowed` (405),
+`validation_failed` (422, with `errors`), `too_many_requests` (429, with a `Retry-After` header) and `server_error` (500).
+
+**Rate limits.** 120 requests a minute per user (or IP), and 5 login attempts a minute per email and IP.
+MD,
     ],
 
     'ui' => [

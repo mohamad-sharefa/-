@@ -44,7 +44,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.redirectIfLoggedIn();
     Store.bindForm('register-form', '/auth/register');
 </script>

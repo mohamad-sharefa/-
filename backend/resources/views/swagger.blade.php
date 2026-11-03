@@ -20,7 +20,7 @@
 <div id="swagger-ui"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     // Remembers the JWT from login/register/refresh responses and sends it with every request,
     // so you can log in once and then try the protected endpoints directly.
     let token = null;
@@ -33,7 +33,12 @@
         }
         const role = JSON.parse(atob(token.split('.')[1])).role;
         status.innerHTML = 'Logged in as role <b>' + role + '</b>. The token is sent automatically with every request.'
-            + '<button onclick="token = null; showStatus()">Forget token</button>';
+            + '<button type="button" id="forget-token">Forget token</button>';
+        // Inline onclick handlers are blocked by the Content-Security-Policy
+        document.getElementById('forget-token').addEventListener('click', () => {
+            token = null;
+            showStatus();
+        });
     }
 
     window.ui = SwaggerUIBundle({

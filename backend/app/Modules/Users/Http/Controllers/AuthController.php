@@ -36,7 +36,7 @@ class AuthController extends Controller
         $token = auth('api')->attempt($request->validated());
 
         if (! $token) {
-            abort(Response::HTTP_UNAUTHORIZED, 'Invalid email or password.');
+            abort(Response::HTTP_UNAUTHORIZED, __('errors.invalid_credentials'));
         }
 
         return response()->json([
@@ -57,7 +57,7 @@ class AuthController extends Controller
         try {
             $token = auth('api')->refresh();
         } catch (JWTException) {
-            abort(Response::HTTP_UNAUTHORIZED, 'Token cannot be refreshed.');
+            abort(Response::HTTP_UNAUTHORIZED, __('errors.token_not_refreshable'));
         }
 
         return response()->json(['data' => ['token' => $this->tokenPayload($token)]]);

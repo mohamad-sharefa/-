@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title') – المتجر الإلكتروني</title>
-    <script>
+    <script nonce="{{ Vite::cspNonce() }}">
         // Pick guest/user/admin before the page paints, so the menu doesn't flicker
         try {
             const user = JSON.parse(localStorage.getItem('store_user') || 'null');

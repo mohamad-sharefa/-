@@ -26,7 +26,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.initCart();
 </script>
 @endpush

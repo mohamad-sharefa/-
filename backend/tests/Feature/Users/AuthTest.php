@@ -88,7 +88,7 @@ class AuthTest extends TestCase
     {
         $this->get('/api/v1/auth/me')
             ->assertUnauthorized()
-            ->assertJson(['message' => 'Unauthenticated.']);
+            ->assertJson(['status' => 401, 'code' => 'unauthenticated']);
     }
 
     public function test_login_is_blocked_after_five_failed_attempts(): void

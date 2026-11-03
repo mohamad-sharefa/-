@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\ApiExceptionRenderer;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocaleFromHeader;
 use App\Modules\Users\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
@@ -20,7 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserHasRole::class,
         ]);
 
+        $middleware->append(SecurityHeaders::class);
         $middleware->api(append: [SetLocaleFromHeader::class]);
+        // General per-user (or per-IP) request limit on the whole API; see AppServiceProvider
+        $middleware->throttleApi();
 
         // There is no login page: unauthenticated API calls get a 401, not a redirect
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/');
@@ -30,4 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson()
         );
+
+        // One error shape for the whole API, without internal details
+        $exceptions->render(new ApiExceptionRenderer);
     })->create();

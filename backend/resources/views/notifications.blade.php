@@ -19,7 +19,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ Vite::cspNonce() }}">
     Store.loadNotifications();
 </script>
 @endpush
