@@ -43,6 +43,39 @@ services:
       timeout: 5s
       retries: 20
 
+  # Inventory service (Node.js, gRPC on port 50051 inside the Docker network only)
+  inventory:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    environment:
+      DB_HOST: inventory-db
+      DB_DATABASE: inventory
+      DB_USERNAME: inventory
+      DB_PASSWORD: secret
+      # Demonstrating a slow service: SIMULATE_DELAY_MS=5000 docker compose up -d inventory
+      SIMULATE_DELAY_MS: ${SIMULATE_DELAY_MS:-0}
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+
+  # The inventory service's own database; the Laravel app never connects to it
+  inventory-db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: inventory
+      MYSQL_USER: inventory
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - inventory-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
 volumes:
   mysql-data:
+  inventory-data:
   vendor:

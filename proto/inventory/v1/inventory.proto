@@ -1,0 +1,68 @@
+// The contract between the main application (Laravel) and the inventory service (Node.js).
+// Both sides are built from this file; neither talks to the other's database.
+
+syntax = "proto3";
+
+package inventory.v1;
+
+option php_namespace = "App\\Grpc\\Inventory\\V1";
+option php_metadata_namespace = "App\\Grpc\\Inventory\\GPBMetadata";
+
+service InventoryService {
+  // How many pieces of each product are left? Unknown products count as 0.
+  rpc GetStock(GetStockRequest) returns (GetStockResponse);
+
+  // Reserve the quantities of every product in an order, all or nothing.
+  // Calling it again with the same reservation_id does not reserve twice.
+  rpc Reserve(ReserveRequest) returns (ReserveResponse);
+
+  // Give back what a reservation took (the order failed or was cancelled).
+  // Safe to call more than once: stock is only returned the first time.
+  rpc Release(ReleaseRequest) returns (ReleaseResponse);
+
+  // Set a product's stock (used when the admin adds a product).
+  rpc SetStock(SetStockRequest) returns (SetStockResponse);
+}
+
+message StockItem {
+  int64 product_id = 1;
+  int32 quantity = 2;
+}
+
+message GetStockRequest {
+  repeated int64 product_ids = 1;
+}
+
+message GetStockResponse {
+  repeated StockItem items = 1;
+}
+
+message ReserveRequest {
+  // Chosen by the caller (a UUID); used later to release exactly this reservation
+  string reservation_id = 1;
+  repeated StockItem items = 2;
+}
+
+message ReserveResponse {
+  bool reserved = 1;
+  // When not reserved: what is actually left of each product that was short
+  repeated StockItem shortages = 2;
+}
+
+message ReleaseRequest {
+  string reservation_id = 1;
+}
+
+message ReleaseResponse {
+  // false when no reservation has this id
+  bool released = 1;
+}
+
+message SetStockRequest {
+  int64 product_id = 1;
+  int32 quantity = 2;
+}
+
+message SetStockResponse {
+  StockItem item = 1;
+}
