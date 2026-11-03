@@ -2,19 +2,24 @@
 
 // Arabic messages for the validation rules the API uses. Missing keys fall back to English.
 return [
+    'array' => 'يجب أن يكون :attribute قائمة.',
     'confirmed' => 'تأكيد :attribute غير مطابق.',
+    'distinct' => ':attribute مكرر.',
+    'enum' => 'القيمة المختارة لـ :attribute غير صالحة.',
     'decimal' => 'يجب ألا يحتوي :attribute على أكثر من :decimal منازل عشرية.',
     'email' => 'يجب أن يكون :attribute عنوان بريد إلكتروني صحيحاً.',
     'exists' => ':attribute المختار غير موجود.',
     'image' => 'يجب أن يكون :attribute صورة.',
     'integer' => 'يجب أن يكون :attribute عدداً صحيحاً.',
     'max' => [
+        'array' => 'يجب ألا يحتوي :attribute على أكثر من :max عناصر.',
         'file' => 'يجب ألا يزيد حجم :attribute عن :max كيلوبايت.',
         'numeric' => 'يجب ألا يزيد :attribute عن :max.',
         'string' => 'يجب ألا يزيد :attribute عن :max حرفاً.',
     ],
     'mimes' => 'يجب أن يكون :attribute من نوع: :values.',
     'min' => [
+        'array' => 'يجب أن يحتوي :attribute على :min عنصر على الأقل.',
         'numeric' => 'يجب ألا يقل :attribute عن :min.',
         'string' => 'يجب أن يتكون :attribute من :min أحرف على الأقل.',
     ],
@@ -39,5 +44,9 @@ return [
         'stock' => 'الكمية',
         'description' => 'الوصف',
         'image' => 'الصورة',
+        'items' => 'المنتجات',
+        'items.*.product_id' => 'المنتج',
+        'items.*.quantity' => 'الكمية',
+        'status' => 'الحالة',
     ],
 ];

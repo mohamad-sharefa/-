@@ -232,3 +232,101 @@ html[data-auth="admin"] [data-show~="admin"] { display: inline-flex; }
 .product-detail__description { border-top: 1px solid var(--divider); padding-top: 16px; display: flex; flex-direction: column; gap: 8px; }
 .product-detail__description h2 { margin: 0; font-size: 16px; font-weight: 700; }
 .product-detail__description p { margin: 0; font-size: 15px; line-height: 1.8; color: #3D4452; white-space: pre-line; }
+
+/* Add to cart */
+.add-to-cart { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.add-to-cart[hidden] { display: none; }
+.add-to-cart label { font-size: 14px; font-weight: 600; }
+.add-to-cart input {
+    width: 88px; height: 46px; padding: 0 12px; border: 1px solid var(--input-border); border-radius: 8px;
+    font-size: 15px; font-family: inherit; text-align: center;
+}
+.add-to-cart .btn { gap: 8px; height: 46px; }
+.notice { margin: 0; padding: 12px 14px; border-radius: 8px; font-size: 14px; }
+.notice[hidden] { display: none; }
+.notice--success { background: #E7F6EC; color: #05603A; border: 1px solid #ABEFC6; }
+.notice a { font-weight: 600; color: #05603A; }
+
+/* Header cart count */
+.nav__link { display: inline-flex; align-items: center; gap: 6px; }
+.nav__count {
+    min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--accent);
+    color: #FFFFFF; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+}
+.nav__count[hidden] { display: none; }
+
+/* Cart */
+.cart-layout { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.cart-layout[hidden] { display: none; }
+.cart-items { flex: 999 1 560px; min-width: 0; max-width: none; }
+.cart-row {
+    display: flex; align-items: center; gap: 16px; padding: 16px 0; flex-wrap: wrap;
+    border-bottom: 1px solid var(--divider);
+}
+.cart-row:last-child { border-bottom: 0; }
+.cart-row__info { flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px; }
+.cart-row__name { font-size: 16px; font-weight: 600; color: var(--text); text-decoration: none; }
+.cart-row__price { font-size: 14px; color: var(--muted); align-self: flex-start; }
+.cart-row__total { min-width: 90px; font-size: 16px; font-weight: 700; text-align: left; }
+.qty { display: flex; align-items: center; border: 1px solid var(--input-border); border-radius: 8px; overflow: hidden; }
+.qty__btn { width: 44px; height: 44px; border: 0; background: var(--surface); font-size: 18px; font-family: inherit; cursor: pointer; color: var(--text); }
+.qty__btn:hover { background: var(--ground); }
+.qty__value { min-width: 36px; text-align: center; font-weight: 600; }
+.icon-btn {
+    width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.icon-btn--danger { color: var(--danger); }
+.icon-btn--danger:hover { background: var(--danger-soft); }
+.summary { flex: 1 1 280px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.summary__title { margin: 0; font-size: 18px; font-weight: 700; }
+.summary__row { display: flex; justify-content: space-between; font-size: 15px; color: var(--muted); }
+.summary__row--total { font-size: 18px; font-weight: 700; color: var(--text); border-top: 1px solid var(--divider); padding-top: 16px; }
+.summary__link { text-align: center; font-size: 15px; font-weight: 600; }
+
+/* Tables */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+.table-wrap[hidden] { display: none; }
+.table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 15px; }
+.table th { padding: 14px 20px; text-align: right; font-weight: 600; color: var(--muted); background: #F9FAFB; }
+.table td { padding: 16px 20px; color: #3D4452; border-top: 1px solid var(--divider); }
+.table tfoot th, .table tfoot td { border-top: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 17px; }
+.table [hidden] { display: none; }
+.table__strong { font-weight: 700; color: var(--text) !important; }
+.table__money { text-align: right; }
+.table__total { font-size: 18px; font-weight: 700; }
+.table__link { font-weight: 600; }
+
+/* Order status */
+.status-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.status-badge--lg { padding: 6px 14px; font-size: 15px; }
+.status-badge--pending { background: #FFF4E5; color: #8A4B00; }
+.status-badge--confirmed { background: var(--accent-soft); color: var(--accent-ink); }
+.status-badge--shipped { background: #EEF0FF; color: #3538CD; }
+.status-badge--delivered { background: #E7F6EC; color: #067647; }
+.status-badge--cancelled { background: var(--danger-soft); color: var(--danger); }
+
+.order { display: flex; flex-direction: column; gap: 20px; }
+.order[hidden] { display: none; }
+.order__heading { display: flex; flex-direction: column; gap: 4px; }
+.steps {
+    list-style: none; margin: 0; padding: 20px 24px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 12px;
+}
+.steps[hidden] { display: none; }
+.steps__item { display: flex; align-items: center; gap: 10px; }
+.steps__dot {
+    width: 32px; height: 32px; border-radius: 999px; flex: none; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; background: var(--divider); color: var(--muted);
+}
+.steps__label { font-size: 15px; font-weight: 600; color: var(--muted); }
+.steps__item.is-done .steps__dot { background: var(--accent); color: #FFFFFF; }
+.steps__item.is-done .steps__label { color: var(--text); }
+.status-panel { max-width: 560px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.status-panel[hidden] { display: none; }
+.status-form { display: flex; gap: 12px; flex-wrap: wrap; }
+.status-form select {
+    flex: 1 1 200px; height: 46px; padding: 0 12px; border: 1px solid var(--input-border); border-radius: 8px;
+    font-size: 15px; font-family: inherit; background: var(--surface); color: var(--text);
+}
+.status-form .btn { height: 46px; }

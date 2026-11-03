@@ -12,3 +12,4 @@
 
 require app_path('Modules/Users/routes.php');
 require app_path('Modules/Products/routes.php');
+require app_path('Modules/Orders/routes.php');

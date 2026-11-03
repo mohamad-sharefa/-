@@ -4,6 +4,7 @@ window.Store = (() => {
     const API = '/api/v1';
     const TOKEN_KEY = 'store_token';
     const USER_KEY = 'store_user';
+    const CART_KEY = 'store_cart';
 
     const getToken = () => localStorage.getItem(TOKEN_KEY);
     const getUser = () => JSON.parse(localStorage.getItem(USER_KEY) || 'null');
@@ -16,6 +17,7 @@ window.Store = (() => {
     function clearSession() {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(CART_KEY);
     }
 
     async function api(path, { method = 'GET', body } = {}) {
@@ -185,7 +187,7 @@ window.Store = (() => {
             return window.location.replace('/products');
         }
         renderProductGrid(products.data.data, products.data.meta.total);
-        renderPagination(products.data.meta, categoryId);
+        renderPagination(products.data.meta, (page) => linkFor(categoryId, page));
     }
 
     function linkFor(categoryId, page) {
@@ -228,14 +230,15 @@ window.Store = (() => {
         )));
     }
 
-    function renderPagination(meta, categoryId) {
+    // `makeLink(page)` returns the URL of a page
+    function renderPagination(meta, makeLink) {
         const nav = document.getElementById('pagination');
         if (meta.last_page <= 1) return nav.replaceChildren();
 
         const link = (label, page, { current = false, disabled = false } = {}) => {
             if (disabled) return el('span', { class: 'page-link is-disabled', 'aria-disabled': 'true', text: label });
             return el('a', {
-                href: linkFor(categoryId, page),
+                href: makeLink(page),
                 class: 'page-link' + (current ? ' is-current' : ''),
                 ...(current && { 'aria-current': 'page' }),
                 text: label,
@@ -273,6 +276,259 @@ window.Store = (() => {
         field('stock').classList.toggle('stock--out', product.stock === 0);
         field('description').textContent = product.description || 'لا يوجد وصف.';
         document.getElementById('product-detail').hidden = false;
+
+        if (product.stock > 0) {
+            const form = document.getElementById('add-to-cart');
+            form.elements.quantity.max = product.stock;
+            form.hidden = false;
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                addToCart(product, Math.max(1, parseInt(form.elements.quantity.value, 10) || 1));
+                document.getElementById('added-notice').hidden = false;
+            });
+        }
+    }
+
+    /* ---------- Cart (kept in this browser until the order is placed) ---------- */
+
+    const getCart = () => JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+
+    function saveCart(items) {
+        localStorage.setItem(CART_KEY, JSON.stringify(items));
+        updateCartCount();
+    }
+
+    function updateCartCount() {
+        const count = getCart().reduce((sum, item) => sum + item.quantity, 0);
+        document.querySelectorAll('[data-cart-count]').forEach((badge) => {
+            badge.textContent = count;
+            badge.hidden = count === 0;
+        });
+    }
+
+    function addToCart(product, quantity) {
+        const items = getCart();
+        const existing = items.find((item) => item.product_id === product.id);
+        if (existing) existing.quantity += quantity;
+        else items.push({ product_id: product.id, name: product.name, price: product.price, quantity });
+        saveCart(items);
+    }
+
+    // Money as cents, so totals add up exactly
+    const cents = (price) => Math.round(parseFloat(price) * 100);
+    const fromCents = (value) => (value / 100).toFixed(2);
+
+    function initCart() {
+        const render = () => {
+            const items = getCart();
+            document.getElementById('cart-empty').hidden = items.length > 0;
+            document.getElementById('cart-layout').hidden = items.length === 0;
+
+            const change = (productId, quantity) => {
+                saveCart(getCart()
+                    .map((item) => (item.product_id === productId ? { ...item, quantity } : item))
+                    .filter((item) => item.quantity > 0));
+                render();
+            };
+
+            document.getElementById('cart-items').replaceChildren(...items.map((item, index) => {
+                const decrease = el('button', { type: 'button', class: 'qty__btn', 'aria-label': 'إنقاص الكمية', text: '−' });
+                const increase = el('button', { type: 'button', class: 'qty__btn', 'aria-label': 'زيادة الكمية', text: '+' });
+                const remove = el('button', { type: 'button', class: 'icon-btn icon-btn--danger', 'aria-label': 'إزالة ' + item.name + ' من السلة' });
+                remove.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path></svg>';
+                decrease.addEventListener('click', () => change(item.product_id, Math.max(1, item.quantity - 1)));
+                increase.addEventListener('click', () => change(item.product_id, item.quantity + 1));
+                remove.addEventListener('click', () => change(item.product_id, 0));
+
+                return el('div', { class: 'cart-row' }, [
+                    el('div', { class: 'cart-row__info' }, [
+                        el('a', { href: '/products/' + item.product_id, class: 'cart-row__name', text: item.name }),
+                        el('span', { class: 'cart-row__price', dir: 'ltr', text: formatPrice(item.price) }),
+                        el('span', { class: 'field__error', 'data-error-for': 'items.' + index + '.quantity' }),
+                    ]),
+                    el('div', { class: 'qty' }, [increase, el('span', { class: 'qty__value', text: item.quantity }), decrease]),
+                    el('span', { class: 'cart-row__total', dir: 'ltr', text: formatPrice(fromCents(cents(item.price) * item.quantity)) }),
+                    remove,
+                ]);
+            }));
+
+            document.getElementById('cart-count').textContent = items.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-total').textContent = formatPrice(
+                fromCents(items.reduce((sum, item) => sum + cents(item.price) * item.quantity, 0)),
+            );
+        };
+
+        render();
+
+        const button = document.getElementById('checkout-button');
+        button.addEventListener('click', async () => {
+            if (!getToken()) return window.location.href = '/login';
+
+            showAlert('');
+            button.disabled = true;
+            try {
+                const items = getCart().map(({ product_id, quantity }) => ({ product_id, quantity }));
+                const { response, data } = await api('/orders', { method: 'POST', body: { items } });
+
+                if (response.ok) {
+                    saveCart([]);
+                    return window.location.href = '/orders/' + data.data.id + '?placed=1';
+                }
+                if (response.status === 401) {
+                    clearSession();
+                    return window.location.href = '/login';
+                }
+                if (response.status === 422) {
+                    // e.g. "only 1 left": show it under the product it belongs to
+                    Object.entries(data.errors).forEach(([key, messages]) => {
+                        const target = document.querySelector('[data-error-for="' + key + '"]');
+                        if (target) target.textContent = messages[0];
+                    });
+                    showAlert('تعذّر إنشاء الطلب. راجع الملاحظات تحت المنتجات.');
+                } else {
+                    showAlert('حدث خطأ غير متوقع. حاول مرة أخرى.');
+                }
+            } catch {
+                showAlert('تعذّر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.');
+            } finally {
+                button.disabled = false;
+            }
+        });
+    }
+
+    /* ---------- Orders ---------- */
+
+    const STATUS_LABELS = {
+        pending: 'قيد الانتظار',
+        confirmed: 'مؤكد',
+        shipped: 'تم الشحن',
+        delivered: 'تم التسليم',
+        cancelled: 'ملغى',
+    };
+    const STATUS_FLOW = ['pending', 'confirmed', 'shipped', 'delivered'];
+
+    const formatDate = (iso) => new Date(iso).toLocaleDateString('ar-SY', { dateStyle: 'long' });
+    const statusBadge = (status, extraClass = '') => el('span', {
+        class: 'status-badge status-badge--' + status + (extraClass ? ' ' + extraClass : ''),
+        text: STATUS_LABELS[status] || status,
+    });
+    const piecesText = (count) => (count === 1 ? 'قطعة واحدة' : count === 2 ? 'قطعتان' : count + ' قطع');
+
+    async function loadOrders() {
+        if (!getToken()) return window.location.replace('/login');
+
+        const page = new URLSearchParams(window.location.search).get('page') || '1';
+        const { response, data } = await api('/orders?page=' + encodeURIComponent(page));
+        if (response.status === 401) {
+            clearSession();
+            return window.location.replace('/login');
+        }
+
+        const isAdmin = getUser()?.role === 'admin';
+        document.getElementById('orders-title').textContent = isAdmin ? 'الطلبات' : 'طلباتي';
+        document.querySelectorAll('[data-admin-col]').forEach((cell) => { cell.hidden = !isAdmin; });
+
+        const orders = data.data;
+        document.getElementById('orders-empty').hidden = orders.length > 0;
+        document.getElementById('orders-table').hidden = orders.length === 0;
+
+        document.getElementById('orders-body').replaceChildren(...orders.map((order) => el('tr', {}, [
+            el('td', { class: 'table__strong', text: '#' + order.id }),
+            ...(isAdmin ? [el('td', { text: order.customer.name })] : []),
+            el('td', { text: formatDate(order.created_at) }),
+            el('td', { text: piecesText(order.quantity) }),
+            el('td', { class: 'table__money table__strong', dir: 'ltr', text: formatPrice(order.total) }),
+            el('td', {}, [statusBadge(order.status)]),
+            el('td', {}, [el('a', { href: '/orders/' + order.id, class: 'table__link', text: 'عرض' })]),
+        ])));
+
+        renderPagination(data.meta, (p) => '/orders' + (p > 1 ? '?page=' + p : ''));
+    }
+
+    async function loadOrder(id) {
+        if (!getToken()) return window.location.replace('/login');
+
+        const { response, data } = await api('/orders/' + id);
+        if (response.status === 401) {
+            clearSession();
+            return window.location.replace('/login');
+        }
+        if (!response.ok) {
+            const error = document.getElementById('order-error');
+            error.textContent = response.status === 403
+                ? 'لا تملك صلاحية عرض هذا الطلب.'
+                : 'هذا الطلب غير موجود.';
+            error.hidden = false;
+            return;
+        }
+
+        if (new URLSearchParams(window.location.search).has('placed')) {
+            document.getElementById('placed-notice').hidden = false;
+        }
+        renderOrder(data.data);
+    }
+
+    function renderOrder(order) {
+        const field = (name) => document.querySelector('[data-order="' + name + '"]');
+        document.title = 'الطلب #' + order.id + ' – المتجر الإلكتروني';
+
+        field('title').textContent = 'الطلب #' + order.id;
+        field('meta').textContent = formatDate(order.created_at) + ' · ' + order.customer.name;
+        field('status').className = 'status-badge status-badge--lg status-badge--' + order.status;
+        field('status').textContent = STATUS_LABELS[order.status] || order.status;
+
+        const reached = STATUS_FLOW.indexOf(order.status);
+        field('steps').replaceChildren(...STATUS_FLOW.map((status, index) => {
+            const done = order.status !== 'cancelled' && index <= reached;
+            return el('li', { class: 'steps__item' + (done ? ' is-done' : '') }, [
+                el('span', { class: 'steps__dot', text: String(index + 1) }),
+                el('span', { class: 'steps__label', text: STATUS_LABELS[status] }),
+            ]);
+        }));
+        field('steps').hidden = order.status === 'cancelled';
+
+        field('items').replaceChildren(...order.items.map((item) => el('tr', {}, [
+            el('td', { class: 'table__strong', text: item.product_name }),
+            el('td', { class: 'table__money', dir: 'ltr', text: formatPrice(item.unit_price) }),
+            el('td', { text: String(item.quantity) }),
+            el('td', { class: 'table__money table__strong', dir: 'ltr', text: formatPrice(item.line_total) }),
+        ])));
+        field('total').textContent = formatPrice(order.total);
+
+        document.getElementById('order').hidden = false;
+        setupStatusPanel(order);
+    }
+
+    // Admin only: move the order to one of its allowed next statuses
+    function setupStatusPanel(order) {
+        const panel = document.getElementById('status-panel');
+        const isAdmin = getUser()?.role === 'admin';
+        panel.hidden = !isAdmin || order.next_statuses.length === 0;
+        if (panel.hidden) return;
+
+        const form = document.getElementById('status-form');
+        const select = document.getElementById('next-status');
+        select.replaceChildren(...order.next_statuses.map((status) => el('option', { value: status, text: STATUS_LABELS[status] })));
+
+        form.onsubmit = async (event) => {
+            event.preventDefault();
+            showAlert('');
+            const button = form.querySelector('button');
+            button.disabled = true;
+            try {
+                const { response, data } = await api('/orders/' + order.id + '/status', {
+                    method: 'PATCH',
+                    body: { status: select.value },
+                });
+                if (response.ok) return renderOrder(data.data);
+                showAlert(data?.errors?.status?.[0]
+                    || (response.status === 403 ? 'هذه العملية متاحة للمسؤول فقط.' : 'حدث خطأ غير متوقع. حاول مرة أخرى.'));
+            } catch {
+                showAlert('تعذّر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.');
+            } finally {
+                button.disabled = false;
+            }
+        };
     }
 
     // Admin: add a product. Non-admins are sent back; the API enforces the same rule.
@@ -311,6 +567,11 @@ window.Store = (() => {
     document.addEventListener('click', (event) => {
         if (event.target.closest('[data-action="logout"]')) logout();
     });
+    updateCartCount();
 
-    return { bindForm, redirectIfLoggedIn, loadAccount, logout, loadProducts, loadProduct, initProductForm };
+    return {
+        bindForm, redirectIfLoggedIn, loadAccount, logout,
+        loadProducts, loadProduct, initProductForm,
+        initCart, loadOrders, loadOrder,
+    };
 })();

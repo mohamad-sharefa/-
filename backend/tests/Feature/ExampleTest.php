@@ -19,5 +19,8 @@ class ExampleTest extends TestCase
         $this->get('/products')->assertOk()->assertSee('المنتجات');
         $this->get('/products/1')->assertOk()->assertSee('العودة إلى المنتجات');
         $this->get('/admin/products/create')->assertOk()->assertSee('إضافة منتج جديد');
+        $this->get('/cart')->assertOk()->assertSee('ملخص الطلب');
+        $this->get('/orders')->assertOk()->assertSee('رقم الطلب');
+        $this->get('/orders/1')->assertOk()->assertSee('العودة إلى الطلبات');
     }
 }

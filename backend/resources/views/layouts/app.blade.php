@@ -28,6 +28,9 @@
         </a>
         <nav class="nav" aria-label="القائمة الرئيسية">
             <a href="{{ route('products.index') }}" @class(['nav__link', 'is-active' => $active === 'products'])>المنتجات</a>
+            <a href="{{ route('cart') }}" @class(['nav__link', 'is-active' => $active === 'cart'])>السلة <span class="nav__count" data-cart-count hidden></span></a>
+            <a href="{{ route('orders.index') }}" data-show="user" @class(['nav__link', 'is-active' => $active === 'orders'])>طلباتي</a>
+            <a href="{{ route('orders.index') }}" data-show="admin" @class(['nav__link', 'is-active' => $active === 'orders'])>الطلبات</a>
             <a href="{{ route('admin.products.create') }}" data-show="admin" @class(['nav__link', 'is-active' => $active === 'add-product'])>إضافة منتج</a>
             <a href="{{ route('account') }}" data-show="user admin" @class(['nav__link', 'is-active' => $active === 'account'])>حسابي</a>
             <button type="button" class="btn btn--outline" data-show="user admin" data-action="logout">تسجيل الخروج</button>

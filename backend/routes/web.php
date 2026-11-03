@@ -13,6 +13,12 @@ Route::get('/products/{productId}', fn (int $productId) => view('products.show',
     ->whereNumber('productId')
     ->name('products.show');
 
+Route::view('/cart', 'cart')->name('cart');
+Route::view('/orders', 'orders.index')->name('orders.index');
+Route::get('/orders/{orderId}', fn (int $orderId) => view('orders.show', ['orderId' => $orderId]))
+    ->whereNumber('orderId')
+    ->name('orders.show');
+
 // The page itself is public markup; the API refuses the save unless the token belongs to an admin
 Route::view('/admin/products/create', 'admin.products.create')->name('admin.products.create');
 
