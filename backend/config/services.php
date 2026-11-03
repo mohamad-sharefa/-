@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // Separate inventory service (Node.js) reached over gRPC; see proto/inventory/v1/inventory.proto
+    'inventory' => [
+        'driver' => env('INVENTORY_DRIVER', 'grpc'), // "memory" in tests
+        'host' => env('INVENTORY_GRPC_HOST', 'inventory:50051'),
+        // Every call gives up after this long, so a slow or stopped service never blocks the user
+        'timeout_ms' => (int) env('INVENTORY_TIMEOUT_MS', 2000),
+    ],
+
 ];

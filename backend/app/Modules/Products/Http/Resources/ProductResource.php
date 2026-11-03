@@ -21,7 +21,8 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             // Money is sent as a string ("45.00") so no precision is lost
             'price' => $this->price,
-            'stock' => $this->stock,
+            // From the inventory service; null when it could not be reached
+            'stock' => $this->resource->stock,
             'image_url' => $this->imageUrl(),
             'category' => new CategoryResource($this->whenLoaded('category')),
             'created_at' => $this->created_at?->toIso8601String(),

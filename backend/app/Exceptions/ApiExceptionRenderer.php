@@ -66,7 +66,8 @@ class ApiExceptionRenderer
             $body['errors'] = $e->errors();
         }
 
-        if (config('app.debug') && $status >= 500) {
+        // Only for real bugs; a deliberate 503 (e.g. inventory service down) isn't one
+        if (config('app.debug') && $status >= 500 && ! $e instanceof HttpExceptionInterface) {
             $body['debug'] = [
                 'exception' => $e::class,
                 'message' => $e->getMessage(),
@@ -82,8 +83,9 @@ class ApiExceptionRenderer
      */
     private function message(Throwable $e, int $status, string $code, array $headers): string
     {
-        // 401s raised on purpose carry their own, already translated, reason ("wrong password")
-        if ($status === 401 && $e instanceof HttpExceptionInterface && $e->getMessage() !== '') {
+        // 401s and 503s raised on purpose carry their own, already translated, reason
+        // ("wrong password", "the inventory service is not responding")
+        if (in_array($status, [401, 503], true) && $e instanceof HttpExceptionInterface && $e->getMessage() !== '') {
             return $e->getMessage();
         }
 

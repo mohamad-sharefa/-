@@ -6,6 +6,7 @@ use App\Modules\Orders\Enums\OrderStatus;
 use App\Modules\Orders\Events\OrderPlaced;
 use App\Modules\Orders\Events\OrderStatusChanged;
 use App\Modules\Orders\Models\Order;
+use App\Modules\Products\Inventory\InventoryService;
 use App\Modules\Products\Models\Product;
 use App\Modules\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,12 +34,17 @@ class OrderTest extends TestCase
         return Order::findOrFail($id);
     }
 
+    private function stockOf(Product $product): int
+    {
+        return app(InventoryService::class)->stockOf([$product->id])[$product->id];
+    }
+
     public function test_a_customer_can_place_an_order_with_several_products(): void
     {
         Event::fake([OrderPlaced::class]);
         $customer = User::factory()->create();
-        $headphones = Product::factory()->create(['name' => 'Headphones', 'price' => '45.00', 'stock' => 10]);
-        $mug = Product::factory()->create(['name' => 'Mug', 'price' => '8.00', 'stock' => 5]);
+        $headphones = Product::factory()->withStock(10)->create(['name' => 'Headphones', 'price' => '45.00']);
+        $mug = Product::factory()->withStock(5)->create(['name' => 'Mug', 'price' => '8.00']);
 
         $this->actingAsUser($customer)->postJson('/api/v1/orders', ['items' => [
             ['product_id' => $headphones->id, 'quantity' => 1],
@@ -51,16 +57,16 @@ class OrderTest extends TestCase
             ->assertJsonPath('data.items.1.line_total', '16.00')
             ->assertJsonPath('data.customer.id', $customer->id);
 
-        $this->assertSame(9, $headphones->fresh()->stock);
-        $this->assertSame(3, $mug->fresh()->stock);
+        $this->assertSame(9, $this->stockOf($headphones));
+        $this->assertSame(3, $this->stockOf($mug));
         Event::assertDispatched(OrderPlaced::class);
     }
 
     public function test_an_order_is_refused_when_stock_is_insufficient_and_nothing_is_reserved(): void
     {
         $customer = User::factory()->create();
-        $plenty = Product::factory()->create(['stock' => 10]);
-        $lastPiece = Product::factory()->create(['name' => 'Last mouse', 'stock' => 1]);
+        $plenty = Product::factory()->withStock(10)->create();
+        $lastPiece = Product::factory()->withStock(1)->create(['name' => 'Last mouse']);
 
         $this->actingAsUser($customer)->postJson('/api/v1/orders', ['items' => [
             ['product_id' => $plenty->id, 'quantity' => 2],
@@ -71,8 +77,8 @@ class OrderTest extends TestCase
             ->assertJsonMissingValidationErrors(['items.0.quantity']);
 
         $this->assertDatabaseCount('orders', 0);
-        $this->assertSame(10, $plenty->fresh()->stock);
-        $this->assertSame(1, $lastPiece->fresh()->stock);
+        $this->assertSame(10, $this->stockOf($plenty));
+        $this->assertSame(1, $this->stockOf($lastPiece));
     }
 
     public function test_placing_an_order_validates_the_items(): void
@@ -95,7 +101,7 @@ class OrderTest extends TestCase
     public function test_a_customer_can_view_their_own_order(): void
     {
         $customer = User::factory()->create();
-        $order = $this->placeOrder($customer, [['product_id' => Product::factory()->create(['stock' => 5])->id, 'quantity' => 1]]);
+        $order = $this->placeOrder($customer, [['product_id' => Product::factory()->withStock(5)->create()->id, 'quantity' => 1]]);
 
         $this->actingAsUser($customer)->getJson("/api/v1/orders/{$order->id}")
             ->assertOk()
@@ -188,15 +194,15 @@ class OrderTest extends TestCase
     public function test_cancelling_an_order_returns_its_stock(): void
     {
         $customer = User::factory()->create();
-        $product = Product::factory()->create(['stock' => 5]);
+        $product = Product::factory()->withStock(5)->create();
         $order = $this->placeOrder($customer, [['product_id' => $product->id, 'quantity' => 3]]);
-        $this->assertSame(2, $product->fresh()->stock);
+        $this->assertSame(2, $this->stockOf($product));
 
         $this->actingAsUser(User::factory()->admin()->create())
             ->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'cancelled'])
             ->assertOk();
 
-        $this->assertSame(5, $product->fresh()->stock);
+        $this->assertSame(5, $this->stockOf($product));
     }
 
     public function test_guests_cannot_use_orders(): void

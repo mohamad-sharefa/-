@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Modules\Products\Inventory\InventoryService;
 use App\Modules\Products\Models\Category;
 use Illuminate\Database\Seeder;
 
@@ -31,14 +32,21 @@ class ProductSeeder extends Seeder
             ],
         ];
 
+        $inventory = app(InventoryService::class);
+
         foreach ($catalogue as $categoryName => $products) {
             $category = Category::firstOrCreate(['name' => $categoryName]);
 
             foreach ($products as [$name, $price, $stock, $description]) {
-                $category->products()->firstOrCreate(
+                $product = $category->products()->firstOrCreate(
                     ['name' => $name],
-                    ['price' => $price, 'stock' => $stock, 'description' => $description],
+                    ['price' => $price, 'description' => $description],
                 );
+
+                // Stock lives in the inventory service (requirement 2)
+                if ($product->wasRecentlyCreated) {
+                    $inventory->setStock($product->id, $stock);
+                }
             }
         }
     }

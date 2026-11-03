@@ -204,6 +204,7 @@ html[data-auth="admin"] [data-show~="admin"] { display: inline-flex; }
 .product-card__price { font-size: 18px; font-weight: 700; }
 .stock { font-size: 13px; font-weight: 600; color: #067647; }
 .stock--out { color: var(--danger); }
+.stock--unknown { color: #8A4B00; }
 
 /* Pagination */
 .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }

@@ -25,7 +25,7 @@ class NotificationTest extends TestCase
 
     private function placeOrder(User $customer): int
     {
-        $product = Product::factory()->create(['price' => '45.00', 'stock' => 10]);
+        $product = Product::factory()->withStock(10)->create(['price' => '45.00']);
 
         return $this->actingAsUser($customer)
             ->postJson('/api/v1/orders', ['items' => [['product_id' => $product->id, 'quantity' => 1]]])

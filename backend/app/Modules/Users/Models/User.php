@@ -25,6 +25,15 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable;
 
     /**
+     * New users are customers unless made admins on purpose (matches the column default).
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'role' => 'customer',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

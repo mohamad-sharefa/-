@@ -13,6 +13,7 @@ return [
     'server_error' => 'Something went wrong on our side. Please try again.',
     'service_unavailable' => 'The service is temporarily unavailable.',
 
+    'inventory_unavailable' => 'The inventory service is not responding, so this could not be completed. Please try again shortly.',
     'invalid_credentials' => 'Invalid email or password.',
     'token_not_refreshable' => 'The token cannot be refreshed. Log in again.',
 ];

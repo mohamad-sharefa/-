@@ -14,10 +14,10 @@ window.Store = (() => {
         localStorage.setItem(USER_KEY, JSON.stringify(user));
     }
 
+    // An expired session keeps the cart, so the customer can log in again and still order it
     function clearSession() {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
-        localStorage.removeItem(CART_KEY);
     }
 
     async function api(path, { method = 'GET', body } = {}) {
@@ -49,7 +49,9 @@ window.Store = (() => {
     }
 
     const formatPrice = (price) => '$' + price;
-    const stockText = (stock) => (stock > 0 ? 'متوفر' : 'نفد من المخزون');
+    // stock is null when the inventory service couldn't be reached
+    const stockText = (stock) => (stock === null ? 'الكمية غير معروفة حالياً' : stock > 0 ? 'متوفر' : 'نفد من المخزون');
+    const stockClass = (stock) => 'stock' + (stock === null ? ' stock--unknown' : stock > 0 ? '' : ' stock--out');
 
     function imageBox(product, className) {
         const box = el('div', { class: className });
@@ -110,7 +112,10 @@ window.Store = (() => {
                     const seconds = response.headers.get('Retry-After');
                     showAlert('محاولات كثيرة. حاول مرة أخرى بعد ' + seconds + ' ثانية.');
                 } else {
-                    showAlert(messages[response.status] || 'حدث خطأ غير متوقع. حاول مرة أخرى.');
+                    // 503 carries a clear reason from the server (e.g. the inventory service is down)
+                    showAlert(messages[response.status]
+                        || (response.status === 503 && data?.message)
+                        || 'حدث خطأ غير متوقع. حاول مرة أخرى.');
                 }
             } catch {
                 showAlert('تعذّر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.');
@@ -164,6 +169,8 @@ window.Store = (() => {
     async function logout() {
         await api('/auth/logout', { method: 'POST' }).catch(() => {});
         clearSession();
+        // Logging out on purpose also empties the cart, so the next person on this browser starts clean
+        localStorage.removeItem(CART_KEY);
         window.location.replace('/login');
     }
 
@@ -223,7 +230,7 @@ window.Store = (() => {
                     el('span', { class: 'product-card__name', text: product.name }),
                     el('div', { class: 'product-card__footer' }, [
                         el('span', { class: 'product-card__price', dir: 'ltr', text: formatPrice(product.price) }),
-                        el('span', { class: 'stock' + (product.stock > 0 ? '' : ' stock--out'), text: stockText(product.stock) }),
+                        el('span', { class: stockClass(product.stock), text: stockText(product.stock) }),
                     ]),
                 ]),
             ],
@@ -270,16 +277,19 @@ window.Store = (() => {
         field('category').textContent = product.category.name;
         field('name').textContent = product.name;
         field('price').textContent = formatPrice(product.price);
-        field('stock').textContent = product.stock > 0
-            ? 'متوفر — ' + product.stock + ' قطعة في المخزون'
-            : 'نفد من المخزون';
-        field('stock').classList.toggle('stock--out', product.stock === 0);
+        field('stock').textContent = product.stock === null
+            ? 'تعذّر معرفة الكمية المتوفرة حالياً (خدمة المستودع لا تستجيب).'
+            : product.stock > 0
+                ? 'متوفر — ' + product.stock + ' قطعة في المخزون'
+                : 'نفد من المخزون';
+        field('stock').className = stockClass(product.stock);
         field('description').textContent = product.description || 'لا يوجد وصف.';
         document.getElementById('product-detail').hidden = false;
 
-        if (product.stock > 0) {
+        // Unknown stock still allows adding: the order itself asks the inventory service again
+        if (product.stock === null || product.stock > 0) {
             const form = document.getElementById('add-to-cart');
-            form.elements.quantity.max = product.stock;
+            if (product.stock !== null) form.elements.quantity.max = product.stock;
             form.hidden = false;
             form.addEventListener('submit', (event) => {
                 event.preventDefault();
@@ -385,6 +395,9 @@ window.Store = (() => {
                         if (target) target.textContent = messages[0];
                     });
                     showAlert('تعذّر إنشاء الطلب. راجع الملاحظات تحت المنتجات.');
+                } else if (response.status === 503) {
+                    // Inventory service down or too slow: the server says so clearly; the cart is kept
+                    showAlert(data?.message || 'الخدمة غير متاحة مؤقتاً. حاول مرة أخرى بعد قليل.');
                 } else {
                     showAlert('حدث خطأ غير متوقع. حاول مرة أخرى.');
                 }
@@ -522,6 +535,7 @@ window.Store = (() => {
                 });
                 if (response.ok) return renderOrder(data.data);
                 showAlert(data?.errors?.status?.[0]
+                    || (response.status === 503 && data?.message)
                     || (response.status === 403 ? 'هذه العملية متاحة للمسؤول فقط.' : 'حدث خطأ غير متوقع. حاول مرة أخرى.'));
             } catch {
                 showAlert('تعذّر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.');

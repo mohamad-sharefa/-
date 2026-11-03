@@ -10,12 +10,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['category_id', 'name', 'description', 'price', 'stock', 'image_path'])]
+#[Fillable(['category_id', 'name', 'description', 'price', 'image_path'])]
 #[UseFactory(ProductFactory::class)]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
+
+    /**
+     * Stock isn't stored here: it lives in the inventory service. Controllers fill this in
+     * from InventoryService::stockOf(); null means the service couldn't be asked.
+     */
+    public ?int $stock = null;
 
     /**
      * @return array<string, string>
@@ -24,7 +30,6 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
-            'stock' => 'integer',
         ];
     }
 
