@@ -6,9 +6,9 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_the_home_page_redirects_to_login(): void
+    public function test_the_home_page_redirects_to_the_catalogue(): void
     {
-        $this->get('/')->assertRedirect('/login');
+        $this->get('/')->assertRedirect('/products');
     }
 
     public function test_the_store_pages_load(): void
@@ -16,5 +16,8 @@ class ExampleTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('تسجيل الدخول');
         $this->get('/register')->assertOk()->assertSee('إنشاء حساب جديد');
         $this->get('/account')->assertOk()->assertSee('حسابي');
+        $this->get('/products')->assertOk()->assertSee('المنتجات');
+        $this->get('/products/1')->assertOk()->assertSee('العودة إلى المنتجات');
+        $this->get('/admin/products/create')->assertOk()->assertSee('إضافة منتج جديد');
     }
 }

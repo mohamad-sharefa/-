@@ -2,13 +2,7 @@
 
 @section('title', 'حسابي')
 
-@section('nav')
-    <span class="nav__user">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
-        <span data-user="name">…</span>
-    </span>
-    <button type="button" class="btn btn--outline" id="logout-button">تسجيل الخروج</button>
-@endsection
+@section('active', 'account')
 
 @section('content')
 <main class="page-main">
@@ -40,6 +34,5 @@
 @push('scripts')
 <script>
     Store.loadAccount();
-    document.getElementById('logout-button').addEventListener('click', Store.logout);
 </script>
 @endpush

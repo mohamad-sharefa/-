@@ -2,10 +2,7 @@
 
 @section('title', 'تسجيل الدخول')
 
-@section('nav')
-    <a href="{{ route('login') }}" class="nav__link is-active">تسجيل الدخول</a>
-    <a href="{{ route('register') }}" class="nav__link">إنشاء حساب</a>
-@endsection
+@section('active', 'login')
 
 @section('content')
 <main class="auth-main">
