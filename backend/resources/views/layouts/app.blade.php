@@ -32,6 +32,10 @@
             <a href="{{ route('orders.index') }}" data-show="user" @class(['nav__link', 'is-active' => $active === 'orders'])>طلباتي</a>
             <a href="{{ route('orders.index') }}" data-show="admin" @class(['nav__link', 'is-active' => $active === 'orders'])>الطلبات</a>
             <a href="{{ route('admin.products.create') }}" data-show="admin" @class(['nav__link', 'is-active' => $active === 'add-product'])>إضافة منتج</a>
+            <a href="{{ route('notifications') }}" data-show="user admin" aria-label="الإشعارات" data-notifications-link @class(['nav__bell', 'is-active' => $active === 'notifications'])>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                <span class="nav__bell-count" data-notifications-count hidden></span>
+            </a>
             <a href="{{ route('account') }}" data-show="user admin" @class(['nav__link', 'is-active' => $active === 'account'])>حسابي</a>
             <button type="button" class="btn btn--outline" data-show="user admin" data-action="logout">تسجيل الخروج</button>
             <a href="{{ route('login') }}" data-show="guest" @class(['nav__link', 'is-active' => $active === 'login'])>تسجيل الدخول</a>

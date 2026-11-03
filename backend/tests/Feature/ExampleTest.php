@@ -22,5 +22,6 @@ class ExampleTest extends TestCase
         $this->get('/cart')->assertOk()->assertSee('ملخص الطلب');
         $this->get('/orders')->assertOk()->assertSee('رقم الطلب');
         $this->get('/orders/1')->assertOk()->assertSee('العودة إلى الطلبات');
+        $this->get('/notifications')->assertOk()->assertSee('تحديد الكل كمقروء');
     }
 }

@@ -564,14 +564,91 @@ window.Store = (() => {
         });
     }
 
+    /* ---------- Notifications ---------- */
+
+    async function updateNotificationCount() {
+        if (!getToken()) return;
+        const { response, data } = await api('/notifications/unread-count').catch(() => ({ response: {} }));
+        if (!response.ok) return;
+
+        const count = data.data.count;
+        const badge = document.querySelector('[data-notifications-count]');
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.hidden = count === 0;
+        document.querySelector('[data-notifications-link]')
+            .setAttribute('aria-label', count ? 'الإشعارات، ' + count + ' غير مقروءة' : 'الإشعارات');
+    }
+
+    const formatDateTime = (iso) => new Date(iso).toLocaleString('ar-SY', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const NOTIFICATION_TONES = {
+        order_placed: 'teal',
+        new_order: 'amber',
+        order_status_changed: 'teal',
+    };
+
+    async function loadNotifications() {
+        if (!getToken()) return window.location.replace('/login');
+
+        const page = new URLSearchParams(window.location.search).get('page') || '1';
+        const { response, data } = await api('/notifications?page=' + encodeURIComponent(page));
+        if (response.status === 401) {
+            clearSession();
+            return window.location.replace('/login');
+        }
+
+        const notifications = data.data;
+        const list = document.getElementById('notification-list');
+        document.getElementById('notifications-empty').hidden = notifications.length > 0;
+        list.hidden = notifications.length === 0;
+        document.getElementById('read-all-button').hidden = !notifications.some((n) => !n.read);
+
+        list.replaceChildren(...notifications.map((notification) => {
+            const icon = el('span', { class: 'notification__icon notification__icon--' + (NOTIFICATION_TONES[notification.type] || 'teal') });
+            icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>';
+
+            const link = el('a', { href: notification.order_id ? '/orders/' + notification.order_id : '#', class: 'notification__link' }, [
+                icon,
+                el('span', { class: 'notification__body' }, [
+                    el('span', { class: 'notification__title' }, [
+                        notification.title,
+                        ...(notification.read ? [] : [el('span', { class: 'notification__dot' }, [el('span', { class: 'visually-hidden', text: 'غير مقروء' })])]),
+                    ]),
+                    el('span', { class: 'notification__message', text: notification.message }),
+                    el('span', { class: 'notification__time', text: formatDateTime(notification.created_at) }),
+                ]),
+            ]);
+
+            // Mark as read before following the link
+            link.addEventListener('click', async (event) => {
+                if (notification.read) return;
+                event.preventDefault();
+                await api('/notifications/' + notification.id + '/read', { method: 'PATCH' }).catch(() => {});
+                window.location.href = link.href;
+            });
+
+            return el('li', { class: 'notification' + (notification.read ? '' : ' is-unread') }, [link]);
+        }));
+
+        renderPagination(data.meta, (p) => '/notifications' + (p > 1 ? '?page=' + p : ''));
+
+        document.getElementById('read-all-button').onclick = async () => {
+            await api('/notifications/read-all', { method: 'POST' });
+            loadNotifications();
+            updateNotificationCount();
+        };
+    }
+
     document.addEventListener('click', (event) => {
         if (event.target.closest('[data-action="logout"]')) logout();
     });
     updateCartCount();
+    updateNotificationCount();
 
     return {
         bindForm, redirectIfLoggedIn, loadAccount, logout,
         loadProducts, loadProduct, initProductForm,
         initCart, loadOrders, loadOrder,
+        loadNotifications,
     };
 })();

@@ -14,6 +14,7 @@ Route::get('/products/{productId}', fn (int $productId) => view('products.show',
     ->name('products.show');
 
 Route::view('/cart', 'cart')->name('cart');
+Route::view('/notifications', 'notifications')->name('notifications');
 Route::view('/orders', 'orders.index')->name('orders.index');
 Route::get('/orders/{orderId}', fn (int $orderId) => view('orders.show', ['orderId' => $orderId]))
     ->whereNumber('orderId')
