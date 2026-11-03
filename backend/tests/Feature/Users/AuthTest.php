@@ -44,6 +44,17 @@ class AuthTest extends TestCase
             ->assertJsonValidationErrors(['name', 'email', 'password']);
     }
 
+    public function test_validation_messages_follow_the_accept_language_header(): void
+    {
+        $this->postJson('/api/v1/auth/register', [], ['Accept-Language' => 'ar'])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.email.0', 'حقل البريد الإلكتروني مطلوب.');
+
+        $this->postJson('/api/v1/auth/register', [])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.email.0', 'The email field is required.');
+    }
+
     public function test_a_user_can_log_in_and_read_their_profile(): void
     {
         $user = User::factory()->create(['email' => 'ali@shop.test']);

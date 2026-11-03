@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SetLocaleFromHeader;
 use App\Modules\Users\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);
+
+        $middleware->api(append: [SetLocaleFromHeader::class]);
 
         // There is no login page: unauthenticated API calls get a 401, not a redirect
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/');
